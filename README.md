@@ -49,7 +49,7 @@ We will prepare the hybrid firmware and modify it later.
 
 We can use the `vrevm` binary to boot the pcc virtual machine prepared by Apple, but since we need to boot customized firmware, we need to replicate the relevant configuration builder of `vrevm` and boot it manually.
 
-```javascript
+```bash
 ➜  vphone-cli ./build_and_sign.sh
 === Building vphone-cli ===
 [2/2] Compiling plugin GenerateDoccReference
@@ -89,7 +89,7 @@ Done. Run with:
 ➜  vphone-cli
 ```
 
-```javascript
+```bash
 ➜  vphone-cli ./vphone-cli --help
 OVERVIEW: Boot a virtual iPhone (PV=3) in DFU mode
 
@@ -130,7 +130,7 @@ OPTIONS:
 
 Create a folder to store these files.
 
-```javascript
+```bash
 ➜  vphone-cli tree VM
 
 ├── AVPBooter.vresearch1.bin
@@ -152,7 +152,7 @@ Create a folder to store these files.
 
 ### Boot the VM into Recovery Mode
 
-```javascript
+```bash
 ➜  vphone-cli ./boot_dfu.sh
 === vphone-cli ===
 ROM   : ./VM/AVPBooter.vresearch1.bin
@@ -176,7 +176,7 @@ SEP   : enabled
 
 Please confirm the Chip ID in the System Information.
 
-```javascript
+```bash
 Apple Mobile Device (DFU Mode)：
 
   位置ID：	0x80100000
@@ -202,7 +202,7 @@ If `CPFM` does not match, it can probably be ignored. The smaller the value, the
 
 `{ "iPhone99,11", "vresearch101ap", 0x90, 0xFE01, "iPhone 99,11" }, `
 
-```javascript
+```bash
 git clone --recursive https://github.com/wh1te4ever/libirecovery
 cd libirecovery
 ./autogen.sh
@@ -214,7 +214,7 @@ sudo make install
 
 At this point, you can query the virtual machine for device hardware information.
 
-```javascript
+```bash
 ➜  CFW git:(main) ✗ irecovery -q
 CPID: 0xfe01
 CPRV: 0x00
@@ -236,14 +236,14 @@ NAME: iPhone 99,11
 
 Now, request the firmware signature. If the following error occurs, it might be because `autogen.sh` found a `libirecovery` in the system. The fastest way is to replace it directly. 🤣
 
-```javascript
+```bash
 ➜  CFW git:(main) ✗ idevicerestore -e -y ./iPhone17,3_26.1_23B85_Restore -t
 idevicerestore 1.0.0-270-g405fcd1 (libirecovery 1.3.1, libtatsu 1.0.5)
 Found device in DFU mode
 Unable to discover device type
 ```
 
-```javascript
+```bash
 # Replace /opt/homebrew/opt/libirecovery/lib/libirecovery-1.0.5.dylib with the following file
 ./src/.libs/libirecovery-1.0.dylib
 ./src/.libs/libirecovery-1.0.5.dylib
@@ -251,7 +251,7 @@ Unable to discover device type
 
 Make sure you see shsh in the output.
 
-```javascript
+```bash
 ➜  CFW git:(main) ✗ idevicerestore -e -y ./iPhone17,3_26.1_23B85_Restore -t
 idevicerestore 1.0.0-270-g405fcd1 (libirecovery 1.3.1, libtatsu 1.0.5)
 Found device in DFU mode
@@ -283,7 +283,7 @@ SHSH saved to 'shsh/206788706982711884-iPhone99,11-26.1.shsh'
 
 `if ( (_DWORD)v8 != 'DGST' )` is the logic for judgment. Taking the ROM on the author's system as an example.
 
-```javascript
+```bash
 __int64 __fastcall sub_102400(__int64 a1, __int64 a2, int a3, __int64 a4)
 
 >> if ( (_DWORD)v8 != 'DGST' )
@@ -292,7 +292,7 @@ __int64 __fastcall sub_102400(__int64 a1, __int64 a2, int a3, __int64 a4)
 
 ### Execute Replacement Script
 
-```javascript
+```bash
 export AVPBOOTER_BIN=/Users/qaq/Desktop/vphone-cli/VM/AVPBooter.vresearch1.bin
 python3 patch_AVPBooter.vresearch1.bin.py
 
@@ -397,7 +397,7 @@ Run it and confirm that the folder `iPhone17,3_26.1_23B85_Restore` **exists.**
 
 The patch system of the entire repository involves **41+ modifications**, covering 7 major categories of components.
 
-```javascript
+```bash
   1. AVPBooter — DGST validation bypass via text-search + epilogue walk
   2. iBSS — serial labels + image4 callback bypass
   3. iBEC — serial labels + image4 callback + boot-args relocation
@@ -408,13 +408,13 @@ The patch system of the entire repository involves **41+ modifications**, coveri
 
 First you need to install some components
 
-```javascript
+```bash
 pip3 install keystone-engine capstone pyimg4
 ```
 
 Then
 
-```javascript
+```bash
 ➜  vphone git:(main) ✗   python3 patch_scripts/patch_firmware.py ~/Desktop/vphone-cli/VM
 
 [*] VM directory:      /Users/qaq/Desktop/vphone-cli/VM
@@ -520,7 +520,7 @@ Copy the following files from the software repository into the VM.
 
 Boot into dfu mode, use `idevicerestore` to fetch `shsh`.
 
-```javascript
+```bash
 idevicerestore -e -y ./iPhone17,3_26.1_23B85_Restore -t
 
 # Generate and save the shsh compressed as gz to ./shsh
@@ -530,7 +530,7 @@ gzip compressed data, original size modulo 2^32 5897
 
 Build Ramdisk
 
-```javascript
+```bash
 ➜  VM python3 ./build_ramdisk.py
 [*] Setting up ramdisk_input/...
 [*] VM directory:      /Users/qaq/Desktop/vphone-cli/VM
@@ -621,7 +621,7 @@ created: /Users/qaq/Desktop/vphone-cli/VM/ramdisk_builder_temp/ramdisk1.dmg
 
 Send Ramdisk and Boot
 
-```javascript
+```bash
 ➜  VM ./ramdisk_send.sh
 [*] Sending ramdisk from Ramdisk ...
   [1/8] Loading iBSS...
@@ -647,7 +647,7 @@ Send Ramdisk and Boot
 
 Check `vphone-cli` output
 
-```javascript
+```bash
 private>
 2026-02-26 12:26:55.359221+0000 Error driverkitd[4:14b][com.apple.km:DriverBinManager] contentsOfFile failed to read plist: <private>
 IOReturn AppleUSBDeviceMux::setPropertiesGated(OSObject *) setting debug level to 7
@@ -683,7 +683,7 @@ Running server
 
 Connect to ssh service
 
-```javascript
+```bash
 ➜  VM iproxy 2222 22
 
 Creating listening port 2222 for device port 22
@@ -692,7 +692,7 @@ waiting for connection
 # Map port 22 of the machine across the usb to 2222 of the current computer
 ```
 
-```javascript
+```bash
 ➜  VM ssh root@127.0.0.1 -p2222
 
 root@127.0.0.1's password: # Password is alpine
@@ -705,7 +705,7 @@ localhost:~ root#
 
 First, you need to mount the disk
 
-```javascript
+```bash
 ocalhost:~ root# mount_apfs -o rw /dev/disk1s1 /mnt1
 localhost:~ root# snaputil -l /mnt1
 com.apple.os.update-8AAB8DBA5C8F1F756928411675F4A892087B04559CFB084B9E400E661ABAD119
@@ -727,7 +727,7 @@ Usage:
 
 Then some binary updates are required
 
-```javascript
+```bash
 ➜  VM ./install_cfw.sh
 [*] install_cfw.sh — Installing CFW on vphone...
 [+] Restore directory: /Users/qaq/Desktop/vphone-cli/VM/iPhone17,3_26.1_23B85_Restore
@@ -804,7 +804,7 @@ Then some binary updates are required
 
 Then ssh into it and enter `halt`
 
-```javascript
+```bash
 launchd quiesce complete
 AppleSEPManager: Received Paging off notification
 AppleUSBDeviceMux::message - kMessageInterfaceWasDeActivated
@@ -829,7 +829,7 @@ ApplePSCI - system off
 
 Congratulations, things are done.
 
-```javascript
+```bash
 ➜  vphone-cli ./boot.sh
 === Building vphone-cli ===
 [2/2] Compiling plugin GenerateDoccReference
@@ -856,7 +856,7 @@ bash-4.4#
 
 After entering bash, you need to initialize the shell environment.
 
-```javascript
+```bash
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/bin/X11:/usr/games:/iosbinpack64/usr/local/sbin:/iosbinpack64/usr/local/bin:/iosbinpack64/usr/sbin:/iosbinpack64/usr/bin:/iosbinpack64/sbin:/iosbinpack64/bin'
 
 /iosbinpack64/bin/mkdir -p /var/dropbear
@@ -876,7 +876,7 @@ ApplePSCI - system off
 
 To connect to the virtual machine, please use `iproxy` to forward 22222 and 5901.
 
-```javascript
+```bash
 iproxy 5901 5901
 iproxy 22222 22222
 ```
@@ -885,7 +885,7 @@ iproxy 22222 22222
 
 ### Boot pcc vm
 
-```javascript
+```bash
 pccvre release download --release 35622
 pccvre instance create -N pcc-research -R 35622 --variant research
 ```
@@ -893,7 +893,7 @@ pccvre instance create -N pcc-research -R 35622 --variant research
 - <https://appledb.dev/firmware/cloudOS/23B85.html>
 - <https://updates.cdn-apple.com/private-cloud-compute/399b664dd623358c3de118ffc114e42dcd51c9309e751d43bc949b98f4e31349>
 
-```javascript
+```bash
 vrevm restore -d -f --name pcc-research \
     -K ~/Desktop/kernelcache.research.vresearch101 \
     -S ~/Desktop/Firmware/sptm.vresearch1.release.im4p \
@@ -902,11 +902,11 @@ vrevm restore -d -f --name pcc-research \
     ~/Desktop/PCC-CloudOS-26.1-23B85.ipsw
 ```
 
-```javascript
+```bash
 vrevm run --name pcc-research --debug
 ```
 
-```javascript
+```bash
 Starting VM: pcc-research (ecid: 8737a35e085fc3a7)
 GDB stub available at localhost:50693
 SEP GDB stub available at localhost:50694
